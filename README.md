@@ -1,285 +1,241 @@
 # SDS
-<img src="https://github.com/stratosnet/sds/blob/main/_stratos-logo-hb-bz.svg" height="100" alt="Stratos Logo"/>  
+![image](https://user-images.githubusercontent.com/102043225/181995321-e90e0991-3154-4d74-a009-9326ea357ba3.png)
 
-The Stratos Decentralized Storage (SDS) network is a scalable, reliable, self-balancing elastic acceleration network driven by data traffic. It accesses data efficiently and safely. The user has the full flexibility to store any data regardless of the size and type.
+Stratos Merkezi Olmayan Depolama (SDS) ağı, veri trafiği tarafından yönlendirilen, ölçeklenebilir, güvenilir, kendi kendini dengeleyen esnek bir hızlandırma ağıdır. Verilere verimli ve güvenli bir şekilde erişir. Kullanıcı, boyutu ve türü ne olursa olsun herhangi bir veriyi saklama esnekliğine sahiptir.
 
-SDS is composed of many resource nodes (also called PP nodes) that store data, and a few meta nodes (also called indexing or SP nodes) that coordinate everything.
-The current repository contains the code for resource nodes only. For more information about meta nodes, we will open source it once it's ready.
+SDS, verileri depolayan birçok kaynak düğümünden (PP düğümleri olarak da adlandırılır) ve her şeyi koordine eden birkaç meta düğümden (dizin oluşturma veya SP düğümleri olarak da adlandırılır) oluşur.
+Geçerli depo, yalnızca kaynak düğümlerinin kodunu içerir. Meta düğümler hakkında daha fazla bilgi için, hazır olduğunda kaynağı açacağız.
 
-Here, we provide a concise quickstart guide to help set up and run a SDS resource node. For more details of SDS as well as the Tropos-Incentive-Testnet rewards distribution, please refer to [Tropos Incentive Testnet](https://github.com/stratosnet/sds/wiki/Tropos-Incentive-Testnet).
+Burada, bir SDS kaynak düğümünün kurulmasına ve çalıştırılmasına yardımcı olacak kısa bir hızlı başlangıç kılavuzu sunuyoruz. SDS ve Tropos-Incentive-Testnet ödül dağıtımı hakkında daha fazla bilgi için lütfen [Tropos Incentive Testnet](https://github.com/stratosnet/sds/wiki/Tropos-Incentive-Testnet) sayfasına bakın.
 
+# Stratos Tropos-4 Kurulum Rehberi 
 
-## Building a Resource Node From Source
-```bash
+##  Sistem Gereksinimleri
+* 4vCPU
+* 8GB RAM
+* 200GB SSD
+
+## Root Yetkisi Alma Ve Root Dizinine Geçme 
+```shell
+sudo su
+cd /root
+```
+
+## Sistemi Güncelleme
+* 👉 Bu Adımı Tropos-4 Node'u ile Aynı Sunucuya Kuranlar Atlayabilir 👈
+```shell
+apt update && apt upgrade -y
+```
+
+## Gerekli Kütüphanelerin Kurulması
+* 👉 Bu Adımı Tropos-4 Node'u ile Aynı Sunucuya Kuranlar Atlayabilir 👈
+```shell
+apt install make clang pkg-config libssl-dev build-essential git jq ncdu bsdmainutils htop screen -y < "/dev/null"
+```
+## Go Kurulumu 
+* 👉 Bu Adımı Tropos-4 Node'u ile Aynı Sunucuya Kuranlar Atlayabilir 👈
+```shell
+ver="1.18.4"
+wget "https://golang.org/dl/go$ver.linux-amd64.tar.gz"
+rm -rf /usr/local/go
+tar -C /usr/local -xzf "go$ver.linux-amd64.tar.gz"
+rm -rf "go$ver.linux-amd64.tar.gz"
+echo 'export GOROOT=/usr/local/go' >> $HOME/.bash_profile
+echo 'export GOPATH=$HOME/go' >> $HOME/.bash_profile
+echo 'export GO111MODULE=on' >> $HOME/.bash_profile
+echo 'export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin' >> $HOME/.bash_profile
+source $HOME/.bash_profile
+go version
+```
+
+## Stratos SDS Kurulumu
+```shell
+cd $HOME
 git clone https://github.com/stratosnet/sds.git
 cd sds
 git checkout v0.8.1
 make build
-```
-Then you will find the executable binary `ppd` under `./target`
-### Installing the Binary
-The binary can be installed to the default $GOPATH/bin folder by running:
-```bash
+cp target/ppd $HOME/bin
 make install
 ```
-The binary should then be runnable from any folder if you have set up `go env` properly
 
-## Creating a SDS Resource Node
-
-### Creating a Root Directory for Your Resource Node
-To start a resource node, you need to be in a directory dedicated to your resource node. Create a new directory, or go to the root directory of your existing node.
-```bash
-# create a new folder 
+## Node Dosyası Oluşturma
+```shell
+cd $HOME
 mkdir rsnode
 cd rsnode
-```
-### Configuring Your Resource Node
-Next, you need to configure your resource node. The binary will help you create a configuration file at `configs/config.toml`.
-```bash
 ppd config -w -p
-# following the instructions to generate a new wallet account or recovery an existing wallet account
-```
-You will need to edit a few lines in the `configs/config.toml` file to configure your resource node.
-
-First, make sure or change the SDS version section in the `configs/config.toml` file as the following.
-
-```toml
-[version]
-app_ver = 8
-min_app_ver = 8
-show = 'v0.8.1'
 ```
 
-To connect to the Stratos-chain Tropos testnet, make the following changes:
-```toml
-stratos_chain_url = 'https://rest-tropos.thestratos.org:443' 
+## Config Dosyasında Düzenleme Yapma
+Dosya içerisine giriyoruz.
+```shell
+nano $HOME/rsnode/configs/config.toml
 ```
-
-and then the indexing node list:
-```toml
+Sırasıyla şunları yapalım;
+* `network_address` bölümüne node ip adresimizi yazaıyoruz.
+* `p2p_address`, `p2p_password`, `wallet_address` ve `wallet_password` bölümünü not edip kaydediyoruz.
+* `chain_id` kısmı `tropos-4` olmalı öyle değilse düzeltiyoruz.
+* `stratos_chain_url` bölümüne bu adresi 👉 `https://rest-tropos.thestratos.org:443` ekliyoruz.
+* `version` bölümü `v0.8.1` olmalı.
+* ` [[sp_list]]` bölümünü silip aşağıdakileri ekliyoruz;
+```shell
 [[sp_list]]
-p2p_address = ''
-p2p_public_key = ''
-network_address = '18.223.175.117:8888'
-[[sp_list]]
-p2p_address = ''
-p2p_public_key = ''
-network_address = '52.13.28.64:8888'
-[[sp_list]]
-p2p_address = ''
-p2p_public_key = ''
-network_address = '46.51.251.196:8888'
-[[sp_list]]
-p2p_address = ''
-p2p_public_key = ''
+p2p_address = 'stsds1mr668mxu0lyfysypq88sffurm5skwjvjgxu2xt'
+p2p_public_key = 'stsdspub1zcjduepq4v8yu6nzem787nfnwvzrfvpc5f7thktsqjts6xp4cy4a2j4rgm7sgdy4zy'
 network_address = '35.73.160.68:8888'
 [[sp_list]]
-p2p_address = ''
-p2p_public_key = ''
-network_address = '35.74.33.155:8888'
+p2p_address = 'stsds1ftcvm2h9rjtzlwauxmr67hd5r4hpxqucjawpz6'
+p2p_public_key = 'tsdspub1zcjduepqq9rk5zwkzfnnszt5tqg524meeqd9zts0jrjtqk2ly2swm5phlc2qtrcgys'
+network_address = '46.51.251.196:8888'
 [[sp_list]]
-p2p_address = ''
-p2p_public_key = ''
+p2p_address = 'stsds12uufhp4wunhy2n8y5p07xsvy9htnp6zjr40tuw'
+p2p_public_key = 'stsdspub1zcjduepqkst98p2642fv8eh8297ppx7xuzu7qjz67s9hjjhxjxs834md7e0s5rm3lf'
 network_address = '18.130.202.53:8888'
 [[sp_list]]
-p2p_address = ''
-p2p_public_key = ''
+p2p_address = 'stsds1wy6xupax33qksaguga60wcmxpk6uetxt3h5e3e'
+p2p_public_key = 'stsdspub1zcjduepqyyfl7ljwc68jh2kuaqmy84hawfkak4fl2sjlpf8t3dd00ed2eqeqlm65ar'
+network_address = '35.74.33.155:8888'
+[[sp_list]]
+p2p_address = 'stsds1nds6cwl67pp7w4sa5ng5c4a5af9hsjknpcymxn'
+p2p_public_key = 'stsdspub1zcjduepq6mz8w7dygzrsarhh76tnpz0hkqdq44u7usvtnt2qd9qgp8hs8wssl6ye0g'
+network_address = '52.13.28.64:8888'
+[[sp_list]]
+p2p_address = 'stsds1403qtm2t7xscav9vd3vhu0anfh9cg2dl6zx2wg'
+p2p_public_key = 'stsdspub1zcjduepqzarvtl2ulqzw3t42dcxeryvlj6yf80jjchvsr3s8ljsn7c25y3hq2fv5qv'
 network_address = '3.9.152.251:8888'
+[[sp_list]]
+p2p_address = 'stsds1hv3qmnujlrug00frk86zxr0q23rnqcaquh62j2'
+p2p_public_key = 'stsdspub1zcjduepqj69eeq07yfdgu4cdlupvga897zjqjakuru0qar5na7as4kjr7jgs0k7aln'
+network_address = '18.223.175.117:8888'
 ```
-You also need to change the `chain_id` to the value visible [`Stratos Explorer`](https://explorer-tropos.thestratos.org/) right next to the search bar at the top of the page. Currently, it is `tropos-4`.
-```toml
-chain_id = 'tropos-4'
+
+* CTRL X, Y ve Enter diyip dosyayı kaydedip çıkıyoruz.
+
+## Faucet / Token Alma
+`CUZDAN_ADRESINIZ` bölümünü değiştirmeyi unutmayın.
+```shell
+curl --header "Content-Type: application/json" --request POST --data '{"denom":"ustos","address":"CUZDAN_ADRESINIZ"} ' https://faucet-tropos.thestratos.org/credit
 ```
-Finally, make sure to set the `network_address` to your public IP address and port.
 
-Please note, it is not the meta node network_address in [[sp_list]] section
-
-```toml
-# if your node is behind a router, you probably need to configure port forwarding on the router
-port = '18081'
-network_address = 'your node external ip' 
+## TMUX Kurulumu
+```shell
+apt-get install tmux
 ```
-### Acquiring STOS Tokens
-Before you can do anything with your resource node, you will need to acquire some STOS tokens.  
-You can get some by using the faucet API:
-````bash
-  curl --header "Content-Type: application/json" --request POST --data '{"denom":"ustos","address":"put_your_wallet_address_here"} ' https://faucet-tropos.thestratos.org/credit
-````
-Just put your wallet address in the command above, and you should be good to go.
 
-## Starting Your Resource Node
-Once your configuration file is set up properly, and you own tokens in your wallet account, you can start your resource node.
+## TMUX Oturum Açma
+```shell
+tmux new-session -s sds
+```
 
-to start the node as a daemon in background without interactivity:
-```bash
-# Make sure we are inside the root directory of the resource node
-cd rsnode
-# start the resource node
+## SDS Node'u Başlatma
+```shell
+cd ~/rsnode
 ppd start
 ```
 
-### Starting Mining
-In order to interact with the resource node, you need to open a new COMMAND-LINE TERMINAL, and enter the root directory of the same resource node.
-Then, use `ppd terminal` command to start the interaction.
-```bash
-# Open a new command-line terminal
-# Make sure we are inside the root directory of the resource node
-cd rsnode
-# Interact with resource node through a set of "ppd terminal" subcommands
+## SDS Node'u Başlatma
+```shell
+cd ~/rsnode
+ppd start
+```
+
+Aşağıdaki gibi bir çıktı aldıysanız sorun yoktur;
+```shell
+
+```
+
+## Kaynak Node İçinde Terminal Açma
+
+```shell
+screen -S terminal
+cd ~/rsnode
 ppd terminal
 ```
 
-#### Registering to a Meta Node
-Your resource node needs to register to a meta node before doing anything else.  
-In the `ppd terminal` command-line terminal, input one of the two following identical commands:
-```bash
-rp
-# or
+## Register Peer Ekleme
+```shell
 registerpeer
 ```
 
-#### Activating the Resource Node by Staking
-Now you need to activate your node within the blockchain.  
-Use this command in the `ppd terminal` command-line terminal:
-```bash
-activate stakingAmount feeAmount gasAmount
+## Aktivasyon
+```shell
+activate 9000000000 10000 1000000
 ```
->`stakingAmount` is the amount of uSTOS you want to stake. A basic amount would be 1000000000.
->
->`feeAmount` is the amount of uSTOS to pay as a fee for the activation transaction. 10000 would work. it will use default number if not provide
->
->`gasAmount` is the amount of gas to use for the transaction. 1000000 would be a safe number. it will use default number if not provide
 
-Resource node will start to receive tasks from meta nodes and thus gain mining rewards automatically after it has been activated successfully.
-
-## What to Do With a Running Resource Node?
-Here are a set of `ppd terminal` subcommands you can try in the `ppd terminal` command-line terminal.
-
-You can find more details about these subcommands at `ppd terminal` [subcommands](https://github.com/stratosnet/sds/wiki/%60ppd-terminal%60--subcommands)
-
-### Check the current status of a resource node
-
-```bash
+## Node Durumuna Bakma
+```shell
 status
 ```
 
-### Update stake of an active resource node
-
+## Ozone Alma
 ```shell
-updateStake stakeDelta fee gas isIncrStake 
-```
-> `stakeDelta` is the absolute amount of difference between the original and the updated stake. It should be a positive integer, in the unit of `ustos`.
->
-> `isIncrStake` is a flag with `0` for decreasing the original stake and `1` for increasing the original stake.
->
-> When a resource node is suspended, use this command to update its state and re-start mining by increasing its stake.
-
-### Purchase Ozone
-Ozone is the unit of traffic used by SDS. Operations involving network traffic require ozone to be executed.  
-You can purchase ozone with the following command:
-```bash
-prepay purchaseAmount feeAmount gasAmount
-```
->`purchaseAmount` is the amount of uSTOS you want to spend to purchase ozone.
->
-> The other two parameters are the same as above.
-
-### Query Ozone Balance of Resource Node's Wallet
-```bash
-getoz WALLET_ADDRESS
+prepay 1000000000 10000 600000
 ```
 
-### Upload a File
-```bash
-put FILE_PATH
-```
-> `FILE_PATH` is the location of the file to upload, starting from your resource node folder. It is better to be an absolute path.
-
-
-### Upload a media file for streaming
-Streaming is the continuous transmission of audio or video files(media files) from a server to a client.
-In order to upload a streaming file, first you need to install a tool [`ffmpeg`](https://linuxize.com/post/how-to-install-ffmpeg-on-ubuntu-20-04/) for transcoding multimedia files.
-```bash
-putstream FILE_PATH
-```
-
-### List Your Uploaded Files
-```bash
-list
-# or
-ls
-```
-
-### Download a File
-```bash
-get sdm://WALLET_ADDRESS/FILE_HASH SAVE_AS
-```
-
-Every file uploaded to SDS is attributed a unique file hash. You can view the file hash for each of your files when your list your uploaded files.   
-You can use an optional parameter `SAVE_AS` to rename the file after downloading
-
-### Delete a File
-```bash
-delete FILE_HASH
-```
-
-### Share a File
-```bash
-sharefile FILE_HASH DURATION IS_PRIVATE
-```
-> `DURATION` is the time period(in seconds) when the file share expires. Put `0` for unlimited time.
->
-> `IS_PRIVATE` is whether the file shared should be protected by a password. Put `0` for no password, and `1` for a password.
->
-> After this command has been executed successfully, SDS will provide a password to this shared file, like ` SharePassword 3gxw`. Please keep this password for future use.
-
-### List All Shared Files
-```bash
-allshare
-```
-
-### Download a Shared File
-```bash
-getsharefile SHARE_LINK PASSWORD
-```
-> Leave the `PASSWORD` blank if it's a public shared file.
-
-### Cancel File Share
-```bash
-cancelshare SHARE_ID
-```
-
-### View Resource Utilization
-Type `monitor` to show the resource utilization monitor, and `stopmonitor`to hide it.
+## Cüzdan Kontrolü
 ```shell
-# show the resource utilization monitor
-monitor
-
-# hide the resource utilization monitor
-stopmonitor
+getoz CUZDAN_ADRESINIZ
 ```
 
-You can exit the `ppd terminal` command-line terminal by typing `exit` and leave the `ppd start` terminal to run the resource node in background.
+## upload Klasörü Oluşturma
+Önce `upload` adında screen açıyoruz.
+```shell
+screen -S upload
+```
+Sonra klasör açıp `upload.sh` dosyasını açıyoruz;
+```shell
+mkdir -p ~/upload
+nano $HOME/rsnode/upload.sh
+```
 
-# Contribution
+Dosyanın içerisine aşağıdaki kodları giriyoruz.
+```shell
+#!/bin/bash
+while true;
+do /usr/bin/head -c 25M /dev/urandom > "$HOME/upload/test-$(date '+%Y%m%d%H%M')" ; ppd terminal exec put "$HOME/upload/test-$(date '+%Y%m%d%H%M')";
+sleep 900;
+/usr/bin/rm -rf "$HOME/upload/test*";
+sleep 1;
+done
+```
 
-Thank you for considering to help out with the source code! We welcome contributions
-from anyone on the internet, and are grateful for even the smallest of fixes!
+Dosyaya yetki veriyoruz;
+```shell
+cd $HOME/rsnode
+chmod +x upload.sh 
+./upload.sh
+```
 
-If you'd like to contribute to SDS(Stratos Decentralized Storage), please fork, fix, commit and send a pull request
-for the maintainers to review and merge into the main code base.
 
-Please make sure your contributions adhere to our coding guidelines:
+## Kazanılan Ödülleri Kontrol Etme
 
-* Code must adhere to the official Go [formatting](https://golang.org/doc/effective_go.html#formatting)
-  guidelines (i.e. uses [gofmt](https://golang.org/cmd/gofmt/)).
-* Code must be documented adhering to the official Go [commentary](https://golang.org/doc/effective_go.html#commentary)
-  guidelines.
-* Pull requests need to be based on and opened against the `dev` branch, PR name should follow `conventional commits`.
-* Commit messages should be prefixed with the package(s) they modify.
-  * E.g. "pp: make trace configs optional"
+`https://rest-tropos.thestratos.org/pot/rewards/wallet/CUZDAN_ADRESINIZ` adresini tarayıcımızda açıyoruz. Ödüllerin yansıması zaman alır. günlük olarak kontrol edebilirsiniz.
 
---- ---
+## DAHA FAZLA SORUNUZ VARSA STRATOS TÜRKİYE TELEGRAM GRUBU
+[Stratos Türkiye Telegram Sayfası](https://t.me/StratosTurkish)
+
+##  FAYDALI KOMUTLAR
+
+### Cüzdanı Görmek
+```shell
+wallets
+```
+
+### Ozone Almak
+```shell
+prepay 500000000 10000 1000000
+```
+
+### Ozone Miktarına Bakmak
+```shell
+getoz CUZDAN_ADRESINIZ
+```
+
+### Mining'in Suspend / Offline Sorununu Çözme
+```shell
+updateStake 1000000000 10000 1000000 1
+```
 
 # License
 
