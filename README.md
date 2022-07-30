@@ -142,8 +142,9 @@ ppd start
 
 Aşağıdaki gibi bir çıktı aldıysanız sorun yoktur;
 ```shell
-
+[ERROR]2022/07/30 23:01:41 get_pp_status.go:24: Could not find this PP node. Please register first
 ```
+`CTRL B, D` tuş kombinasyonları ile çıkış yapıyoruz.
 
 ## Kaynak Node İçinde Terminal Açma
 
@@ -153,27 +154,42 @@ cd ~/rsnode
 ppd terminal
 ```
 
-## Register Peer Ekleme
+### Register Peer Ekleme
 ```shell
 registerpeer
 ```
+Aşağıdaki gibi bir çıktı aldıysak sorun yoktur.
+```shell
+Request Accepted
+>[INFO]2022/07/30 23:24:41 register_new_pp.go:25: get RspRegisterNewPP
+[INFO]2022/07/30 23:24:41 register_new_pp.go:31: get RspRegisterNewPP RES_SUCCESS 
+[INFO]2022/07/30 23:24:41 register_new_pp.go:39: registered as PP successfully, you can deposit by `activate`
+```
 
-## Aktivasyon
+### Aktivasyon
 ```shell
 activate 9000000000 10000 1000000
 ```
+Aşağıdaki gibi bir çıktı alacağız;
+```shell
+. The node will start mining automatically if the request is successful.
+```
+Yine burada da aşağıdaki gibi bie çıktı alacağız;
+```shell
+Activation: Active | Mining: OFFLINE | Initial tier: 2 | Ongoing tier: 2 | Weight score: 5000
+```
 
-## Node Durumuna Bakma
+### Node Durumuna Bakma
 ```shell
 status
 ```
 
-## Ozone Alma
+### Ozone Alma
 ```shell
 prepay 1000000000 10000 600000
 ```
 
-## Cüzdan Kontrolü
+### Cüzdan Kontrolü
 ```shell
 getoz CUZDAN_ADRESINIZ
 ```
@@ -207,9 +223,7 @@ chmod +x upload.sh
 ./upload.sh
 ```
 
-
 ## Kazanılan Ödülleri Kontrol Etme
-
 `https://rest-tropos.thestratos.org/pot/rewards/wallet/CUZDAN_ADRESINIZ` adresini tarayıcımızda açıyoruz. Ödüllerin yansıması zaman alır. günlük olarak kontrol edebilirsiniz.
 
 ## DAHA FAZLA SORUNUZ VARSA STRATOS TÜRKİYE TELEGRAM GRUBU
